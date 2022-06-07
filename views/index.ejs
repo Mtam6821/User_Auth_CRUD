@@ -3,92 +3,265 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Express • TodoMVC</title>
-		<link rel="stylesheet" href="/css/base.css">
-		<link rel="stylesheet" href="/css/index.css">
-		<link rel="stylesheet" href="/css/app.css">
+		<!-- CSS only -->
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+		<script src="https://cdn.zingchart.com/zingchart.min.js"></script>
+		<script src="https://cdn.zinggrid.com/zinggrid.min.js"></script>
+		<title>Welcome</title>
 	</head>
 	<body>
-		<section class="todoapp">
-			<nav class="nav">
-				<ul>
-					<li class="user"><%= user.name || user.username || user.email %></li>
-					<li>
-						<form action="/logout" method="post">
-							<button class="logout" type="submit">Sign out</button>
-						</form>
-					</li>
+		<div class="container">
+			<header class="d-flex justify-content-center py-3">
+				<ul class="nav nav-pills">
+				<li class="nav-item"><a href="/index" class="nav-link active" aria-current="page">Home</a></li>
+				<li class="nav-item"><a href="/report" class="nav-link">Report</a></li>
+				<li class="nav-item"><a href="/userstable" class="nav-link">Admin</a></li>
+				<li class="nav-item"><a href="/logout" class="nav-link">Log Out</a></li>
 				</ul>
-			</nav>
-			<header class="header">
-				<h1>todos</h1>
-				<form action="/" method="post">
-					<input class="new-todo" name="title" placeholder="What needs to be done?" autofocus>
-					<% if (filter) { %>
-					<input type="hidden" name="filter" value="<%= filter %>"/>
-					<% } %>
-				</form>
 			</header>
-			<% if (activeCount + completedCount > 0) { %>
-			<section class="main">
-				<form action="/toggle-all" method="post">
-					<input id="toggle-all" class="toggle-all" type="checkbox" name="completed" <%- activeCount == 0 ? 'checked' : '' %> onchange="this.form.submit();">
-					<label for="toggle-all">Mark all as complete</label>
-				</form>
-				<ul class="todo-list">
-					<% todos.forEach(function(todo) { %>
-					<li <%- todo.completed ? 'class="completed"' : '' %>>
-						<form action="<%= todo.url %>" method="post">
-							<div class="view">
-								<input class="toggle" type="checkbox" name="completed" <%- todo.completed ? 'checked' : '' %> onchange="this.form.submit();">
-								<label ondblclick="this.closest('li').className = this.closest('li').className + ' editing'; this.closest('li').querySelector('input.edit').focus(); this.closest('li').querySelector('input.edit').value = ''; this.closest('li').querySelector('input.edit').value = '<%= todo.title %>';"><%= todo.title %></label>
-								<button class="destroy" form="delete-<%= todo.id %>"></button>
-							</div>
-							<input class="edit" name="title" value="<%= todo.title %>" onkeyup="if (event.keyCode == 27) { this.setAttribute('data-esc', ''); this.closest('li').className = this.closest('li').className.replace('editing', ''); }" onblur="if (this.getAttribute('data-esc') !== null) { return this.removeAttribute('data-esc'); } this.form.submit();">
-							<% if (filter) { %>
-							<input type="hidden" name="filter" value="<%= filter %>"/>
-							<% } %>
-						</form>
-						<form id="delete-<%= todo.id %>" action="<%= todo.url %>/delete" method="post">
-							<% if (filter) { %>
-							<input type="hidden" name="filter" value="<%= filter %>"/>
-							<% } %>
-						</form>
-					</li>
-					<% }); %>
-				</ul>
-			</section>
-			<% } %>
-			<% if (activeCount + completedCount > 0) { %>
-			<footer class="footer">
-				<span class="todo-count"><strong><%= activeCount %></strong> <%= pluralize('item', activeCount) %> left</span>
-				<ul class="filters">
-					<li>
-						<a <%- !filter ? 'class="selected"' : '' %> href="/">All</a>
-					</li>
-					<li>
-						<a <%- filter == 'active' ? 'class="selected"' : '' %> href="/active">Active</a>
-					</li>
-					<li>
-						<a <%- filter == 'completed' ? 'class="selected"' : '' %> href="/completed">Completed</a>
-					</li>
-				</ul>
-				<% if (completedCount > 0) { %>
-				<form action="/clear-completed" method="post">
-					<button class="clear-completed">Clear completed</button>
-					<% if (filter) { %>
-					<input type="hidden" name="filter" value="<%= filter %>"/>
-					<% } %>
-				</form>
-				<% } %>
-			</footer>
-			<% } %>
-		</section>
-		<footer class="info">
-			<p>Double-click to edit a todo</p>
-			<p>Created by <a href="https://www.jaredhanson.me">Jared Hanson</a></p>
-			<p>Part of <a href="https://todomvc.com">TodoMVC</a></p>
-			<p>Authentication powered by <a href="https://www.passportjs.org">Passport</a></p>
-		</footer>
+		</div>
+
+		<div class="b-example-divider"></div>
+
+		<h3>Hi, <%= user.name || user.username || user.email %>!</h3>
+
+		<div class="b-example-divider"></div>
+
+		<div class="p-5 mb-4 bg-light rounded-3">
+			<div class="container-fluid py-5">
+			    <div id="myBar"></div>
+			</div>
+		</div>
+
+		<div class="b-example-divider"></div>
+
+		<div class="p-5 mb-4 bg-light rounded-3">
+			<div class="container-fluid py-5">
+				<div id="myPie"></div>
+			</div>
+		</div>
+
+		<div class="b-example-divider"></div>
+
+		<div class="p-5 mb-4 bg-light rounded-3">
+			<div class="container-fluid py-5">
+				<zing-grid caption="Static" page-size="10" search sort pager>
+					<zg-colgroup>
+					<zg-column index="user_id" header="User Cookie"></zg-column>
+					<zg-column index="user_agent" header="Agent String"></zg-column>
+					<zg-column index="language" header="Language"></zg-column>
+					<zg-column index="accepts_cookies" header="Cookies?"></zg-column>
+					<zg-column index="js_enabled" header="JS?"></zg-column>
+					<zg-column index="images_enabled" header="Images?"></zg-column>
+					<zg-column index="css_enabled" header="CSS?"></zg-column>
+					<zg-column index="screen_height" header="Screen Height"></zg-column>
+					<zg-column index="screen_width" header="Screen Width"></zg-column>
+					<zg-column index="window_height" header="Window Height"></zg-column>
+					<zg-column index="window_width" header="Window Width"></zg-column>
+					<zg-column index="network_type" header="Network Type"></zg-column>
+					</zg-colgroup>
+					<zg-data src="https://michaeltam.site/api/static"></zg-data>
+				</zing-grid>			
+			</div>
+		</div>
+
+
+
+
+
+
+		<script> 
+			fetch("https://michaeltam.site/api/static" , {
+				headers : {
+					'Authorization': 'Basic dXNlcjp1c2Vy',  //the base-64 encoded basic-auth for user:user
+					'Content-Type': 'application/json'
+				},
+				method : 'GET'
+			})
+			  .then(response => response.json())
+			  .then(data => {
+				let language_entries = [];
+				let cookies_en_entries = [];
+				let images_en_entries = [];
+				let js_en_entries = [];
+				let css_en_entries = [];
+		  
+				for (let i = 0; i < data.length; i++) {
+				  language_entries.push(data[i].language);
+				  cookies_en_entries.push(data[i].accepts_cookies);
+				  images_en_entries.push(data[i].images_enabled);
+				  js_en_entries.push(data[i].js_enabled);
+				  css_en_entries.push(data[i].css_enabled);
+				}
+		  
+				var eng_cookies_en = 0;
+				var non_eng_cookies_en = 0;
+				var eng_images_en = 0;
+				var non_eng_images_en = 0;
+				var eng_js_en = 0;
+				var non_eng_js_en = 0;
+				var eng_css_en = 0;
+				var non_eng_css_en = 0;
+		  
+				for (let i = 0; i < data.length; i++) {
+				  if (language_entries[i] === "en-US" && cookies_en_entries[i] === true) {
+					eng_cookies_en++;
+				  }
+				  else if (cookies_en_entries[i] === true){
+					non_eng_cookies_en++;
+				  }
+		  
+				  if (language_entries[i] === "en-US" && images_en_entries[i] === true) {
+					eng_images_en++;
+				  }
+				  else if (images_en_entries[i] === true){
+					non_eng_images_en++;
+				  }
+		  
+				  if (language_entries[i] === "en-US" && js_en_entries[i] === true) {
+					eng_js_en++;
+				  }
+				  else if (js_en_entries[i] === true){
+					non_eng_js_en++;
+				  }
+		  
+				  if (language_entries[i] === "en-US" && css_en_entries[i] === true) {
+					eng_css_en++;
+				  }
+				  else if (css_en_entries[i] === true){
+					non_eng_css_en++;
+				  }
+				}
+				//create and fill the map with languages
+				var lang_map = new Map();
+		  
+				//fill the language entries;
+				for (let i = 0; i < data.length; i++) {
+				  if (!lang_map.has(language_entries[i])) {
+					lang_map.set(language_entries[i], 1);
+				  }
+				  else {
+					lang_map.set(language_entries[i], 1 + lang_map.get(language_entries[i]))
+				  }
+				}
+		  
+				//make the unique languages and language counts from the array
+				const languages    = Array.from(lang_map.keys())
+				const lang_counts  = Array.from(lang_map.values()); 
+		  
+				//fill the pie data array for use with chart
+				var pieData = [];
+				for (let i = 0; i < languages.length; i++) {
+				  var currSlice = {
+					values: [lang_counts[i]],
+					text: languages[i]
+				  }
+				  pieData.push(currSlice);
+				}
+		  
+			const myBar = {
+			  type: 'bar',
+			  title: {
+				text: 'Language vs Browser Permissions',
+				fontSize: 24,
+				backgroundColor: "#37b8e3",
+			  },
+			  
+			  legend: {
+				draggable: true
+			  },
+			  scaleX: {
+				// set scale label
+				label: {
+				  text: 'Permissions Enabled'
+				},
+				// convert text on scale indices
+				labels: ['Cookies', 'Images', 'JavaScript', 'CSS']
+			  },
+			  scaleY: {
+				// scale label with unicode character
+				label: {
+				  text: "Frequency"
+				}
+			  },
+			  plot: {
+				// animation docs here:
+				// https://www.zingchart.com/docs/tutorials/design-and-styling/chart-animation/#animation__effect
+				animation: {
+				  effect: 'ANIMATION_EXPAND_BOTTOM',
+				  method: 'ANIMATION_STRONG_EASE_OUT',
+				  sequence: 'ANIMATION_BY_NODE',
+				  speed: 275,
+				}
+			  },
+			  series: [{
+				  // plot 1 values, linear data
+				  values: [eng_cookies_en, eng_images_en, eng_js_en, eng_css_en],
+				  text: "en-US language",
+				},
+				{
+				  // plot 2 values, linear data
+				  values: [non_eng_cookies_en, non_eng_images_en, non_eng_js_en, non_eng_css_en],
+				  text: 'non en-US language',
+				},
+			  ]
+			};
+		  
+			let myPie = {
+			  type: 'pie',
+			  title: {
+				text: 'Pie - Language Distribution',
+				fontSize: 24,
+				backgroundColor: "#37b8e3",
+			  },
+			  legend: {
+				draggable: true,
+			  },
+			  plot: {
+				animation: {
+				  effect: 2,
+				  method: 5,
+				  speed: 900,
+				  sequence: 1,
+				  delay: 3000
+				}
+			  },
+			  series: pieData
+			}
+		  
+			// render chart with width and height to
+			// fill the parent container CSS dimensions
+			zingchart.render({
+			  id: 'myBar',
+			  data: myBar,
+			});
+		  
+			zingchart.render({    
+			  id: 'myPie',    
+			  data: myPie,
+			});
+		  })
+		  
+		  var myLine = {
+			"type": "line",
+			"title": {
+			  "text": "Webpage Analytics",
+			  "font-size": "24px",
+			},
+			"series": [{
+				"values": [
+				  149.2,
+				  174.3
+				]
+			  }
+			]
+		  };
+		  
+		  
+		  zingchart.render({
+			id: 'myLine',
+			data: myLine,
+		  });
+		</script>
 	</body>
 </html>

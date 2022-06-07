@@ -1,119 +1,141 @@
 var express = require('express');
+var crypto = require('crypto');
 var db = require('../db');
 
-function fetchTodos(req, res, next) {
-  db.all('SELECT * FROM todos WHERE owner_id = ?', [
-    req.user.id
-  ], function(err, rows) {
+var router = express.Router();
+const adminErrMsg = "Admin permission needed";
+const loginErrMsg = "You are not logged in";
+
+function checkAdmin(req, res, next) {
+  if (!req.user.is_admin) {
+    return res.redirect('/index');
+  }
+  next();
+}
+
+function checkLogin(req, res, next) {
+  if (!req.user) { 
+    return res.redirect('/');
+  }
+  next();
+}
+
+function fetchUsers(req, res, next) {
+  db.all('SELECT * FROM users', function(err, rows) {
     if (err) { return next(err); }
-    
-    var todos = rows.map(function(row) {
+    console.log(rows);
+    var all_users = rows.map(function(row) {
+      
+      const _hashedPassword = Buffer.from(row.hashed_password).toString('base64');
+      const _salt           = Buffer.from(row.salt).toString('base64');
+
       return {
         id: row.id,
-        title: row.title,
-        completed: row.completed == 1 ? true : false,
-        url: '/' + row.id
+        username: row.username,
+        hashedPassword: _hashedPassword,
+        salt: _salt,
+        isAdmin: (row.is_admin == 1)
       }
     });
-    res.locals.todos = todos;
-    res.locals.activeCount = todos.filter(function(todo) { return !todo.completed; }).length;
-    res.locals.completedCount = todos.length - res.locals.activeCount;
+    res.locals.all_users = all_users;
     next();
   });
 }
 
-var router = express.Router();
+/* Display Pages ----------------------------------------------------------------------*/
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  if (!req.user) { return res.render('home'); }
-  next();
-}, fetchTodos, function(req, res, next) {
-  res.locals.filter = null;
-  res.render('index', { user: req.user });
+/* GET home page with login button */
+router.get('/', function(req, res, next) {  
+  res.render('home');
 });
 
-router.get('/active', fetchTodos, function(req, res, next) {
-  res.locals.todos = res.locals.todos.filter(function(todo) { return !todo.completed; });
-  res.locals.filter = 'active';
-  res.render('index', { user: req.user });
-});
+/* arrival page on successful login */
+router.get('/index', checkLogin,
+  function(req, res, next) {
+    res.render('index', { user: req.user });
+  });
 
-router.get('/completed', fetchTodos, function(req, res, next) {
-  res.locals.todos = res.locals.todos.filter(function(todo) { return todo.completed; });
-  res.locals.filter = 'completed';
-  res.render('index', { user: req.user });
-});
+/* report page */
+router.get('/report', checkLogin,
+  function(req, res, next) {
+    res.render('report', { user: req.user });
+  });
 
-router.post('/', function(req, res, next) {
-  req.body.title = req.body.title.trim();
-  next();
-}, function(req, res, next) {
-  if (req.body.title !== '') { return next(); }
-  return res.redirect('/' + (req.body.filter || ''));
-}, function(req, res, next) {
-  db.run('INSERT INTO todos (owner_id, title, completed) VALUES (?, ?, ?)', [
-    req.user.id,
-    req.body.title,
-    req.body.completed == true ? 1 : null
-  ], function(err) {
-    if (err) { return next(err); }
-    return res.redirect('/' + (req.body.filter || ''));
+/* ADMIN ONLY page, html table of all users */
+router.get('/userstable', checkLogin, checkAdmin, fetchUsers,
+  function(req, res, next) {
+    res.render('users', { user: req.user});
+  });
+
+/* CRUD METHODS---------------------------------------------------------------------------------*/
+
+/* ADMIN ONLY, read all as json*/
+router.get('/users', checkLogin, checkAdmin, fetchUsers,
+  function(req, res, next) {
+    res.send(res.locals.all_users);
+  });
+
+/* ADMIN ONLY, make a new user */
+router.post('/users', checkLogin, checkAdmin, 
+  function(req, res, next) {
+
+    var salt = crypto.randomBytes(16);
+
+    crypto.pbkdf2(req.body.password, salt, 310000, 32, 'sha256', function(err, hashedPassword) {
+        if (err) { return next(err); }
+
+        db.run('INSERT INTO users (username, hashed_password, salt, is_admin) VALUES (?, ?, ?, ?)', [
+          req.body.username,
+          hashedPassword,
+          salt,
+          req.body.is_admin
+        ], function(err) {
+          if (err) { return next(err); }
+          return res.redirect('/userstable');
+        });
   });
 });
 
-router.post('/:id(\\d+)', function(req, res, next) {
-  req.body.title = req.body.title.trim();
-  next();
-}, function(req, res, next) {
-  if (req.body.title !== '') { return next(); }
-  db.run('DELETE FROM todos WHERE id = ? AND owner_id = ?', [
-    req.params.id,
-    req.user.id
-  ], function(err) {
-    if (err) { return next(err); }
-    return res.redirect('/' + (req.body.filter || ''));
-  });
-}, function(req, res, next) {
-  db.run('UPDATE todos SET title = ?, completed = ? WHERE id = ? AND owner_id = ?', [
-    req.body.title,
-    req.body.completed !== undefined ? 1 : null,
-    req.params.id,
-    req.user.id
-  ], function(err) {
-    if (err) { return next(err); }
-    return res.redirect('/' + (req.body.filter || ''));
-  });
-});
+/* ADMIN ONLY, update a user */
+router.put('/users/:id', checkLogin, checkAdmin,
+  function(req, res, next) {
 
-router.post('/:id(\\d+)/delete', function(req, res, next) {
-  db.run('DELETE FROM todos WHERE id = ? AND owner_id = ?', [
-    req.params.id,
-    req.user.id
-  ], function(err) {
-    if (err) { return next(err); }
-    return res.redirect('/' + (req.body.filter || ''));
+    var salt = crypto.randomBytes(16);
+    crypto.pbkdf2(req.body.password, salt, 310000, 32, 'sha256', function(err, hashedPassword) {
+      if (err) { return next(err); }
+      db.all('UPDATE users SET username = ?, hashed_password = ?, salt = ?, is_admin = ? WHERE id = ? OR username = ?', [
+        req.body.username,
+        hashedPassword,
+        salt,
+        req.body.is_admin,
+        req.params.id,
+      ], function(err) {
+        if (err) { return next(err); }
+        return;
+      });
+    });
   });
-});
 
-router.post('/toggle-all', function(req, res, next) {
-  db.run('UPDATE todos SET completed = ? WHERE owner_id = ?', [
-    req.body.completed !== undefined ? 1 : null,
-    req.user.id
-  ], function(err) {
-    if (err) { return next(err); }
-    return res.redirect('/' + (req.body.filter || ''));
+/* ADMIN ONLY, get one user */
+router.get('/users/:id', checkLogin, checkAdmin,
+  function(req, res, next) {
+    db.all('SELECT * FROM users WHERE id = ?', [
+      req.params.id
+    ], function(err, row) {
+      if (err) { return next(err); }
+      return res.send(row);
+    });
   });
-});
 
-router.post('/clear-completed', function(req, res, next) {
-  db.run('DELETE FROM todos WHERE owner_id = ? AND completed = ?', [
-    req.user.id,
-    1
-  ], function(err) {
-    if (err) { return next(err); }
-    return res.redirect('/' + (req.body.filter || ''));
+/* ADMIN ONLY, delete one user */
+router.delete('/users/:id', checkLogin, checkAdmin,
+  function(req, res, next) {
+    db.run('DELETE FROM users WHERE id = ?', [
+      req.params.id
+    ], function(err) {
+      if (err) { return next(err); }
+      return res.send({"deleted" : req.params.id});
+    });
   });
-});
 
 module.exports = router;
