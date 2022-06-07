@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="https://michaeltam.site/css/zinggrid.css">
+		<link rel="stylesheet" href="https://michaeltam.site/css/zingchart.css">
+		<link rel="shortcut icon" type="image/jpg" href="https://michaeltam.site/favicon.ico">
+		<!-- CSS only -->
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+		<title>Report</title>
+		<script src="https://cdn.zingchart.com/zingchart.min.js"></script>
+		<script src="https://cdn.zinggrid.com/zinggrid.min.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+	</head>
+    <body>
+		<div class="container">
+			<header class="d-flex justify-content-center py-3">
+				<ul class="nav nav-pills">
+				<li class="nav-item"><a href="/index" class="nav-link" >Home</a></li>
+				<li class="nav-item"><a href="/report" class="nav-link active" aria-current="page">Report</a></li>
+				<li class="nav-item"><a href="/userstable" class="nav-link">Admin</a></li>
+				<li class="nav-item"><a href="/logout" class="nav-link">Log Out</a></li>
+				</ul>
+			</header>
+		</div>
+        <div class="container py-4">
+            <div class="row align-items-md-stretch">
+                <div class="col-md-6">
+                    <div class="h-100 p-5 text-white bg-dark rounded-3">
+                        <h2>Question: Do the site's visitors prefer a landscape or portrait orientation?</h2>
+                        <p>
+                            We want to see if visitors prefer to access the site in a portrait or landscape orientation so we can determine
+                            how to design the layout in the future. To determine this, we collected information on visitors' screen proportions
+                            and whether they were on mobile devices. The raw data can be found in the table at the bottom of the page.
+                            <br>
+                            The chart displays the number of users for both mobile and non-mobile devices and the proportion of their screens.
+                            A proportion less than 1 is in portrait, while a proportion greater than 1 is in landscape. 
+                            <br>
+                            We found that non-touchscreen users didn't appear to have a preference, while mobile users mostly preferred portrait.
+                            While we cannot be sure why mobile users prefer portrait, one possible reason could be that the grid of links under 
+                            the Homework 2 section of the site may be easier to tap on mobile devices when in portrait mode, since in portrait mode
+                            the links are horizontally compressed, causing them to overflow onto multiple lines. If this is the case, we should consider
+                            adding buttons or an easier to navigate menu on the homepage.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="container-fluid py-5">
+                        <div id="myBar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="b-example-divider"></div>
+
+            <div class="row align-items-md-stretch">
+                <div class="p-5 mb-4 bg-light rounded-3">
+                    <div class="container-fluid py-5">
+                        <zing-grid id="props" caption="Window Proportions" page-size="10" search sort pager>
+                            <zg-colgroup>
+                                <zg-column index="window_height" header="Window Height"></zg-column>
+                                <zg-column index="window_width" header="Window Width"></zg-column>
+                                <zg-column index="window_proportion" header="Width-to-Height Proportion"></zg-column>
+                                <zg-column index="is_mobile" header="Detected Touchscreen"></zg-column>
+                            </zg-colgroup>
+                            <zg-data src="https://michaeltam.site/api/static"></zg-data>
+                        </zing-grid>				
+                    </div>
+                </div>
+            </div>
+        </div>
+
+		
+        
+		
+
+		
+
+		<script> 
+			fetch("https://michaeltam.site/api/static" , {
+				headers : {
+					'Authorization': 'Basic dXNlcjp1c2Vy',  //the base-64 encoded basic-auth for user:user
+					'Content-Type': 'application/json'
+				},
+				method : 'GET'
+			})
+			  .then(response => response.json())
+			  .then(data => {
+				let orientation_t = [0,0];
+				let orientation_nt = [0,0];
+				
+				for (let i = 0; i < data.length; i++) {
+				  var category = data[i].window_proportion < 1 ? 0 : 1
+
+				  if (data[i].is_mobile) {
+				    orientation_t[category]++;
+				  }
+				  else {
+					orientation_nt[category]++;
+				  }
+				}
+		  
+				const myBar = {
+				type: 'bar',
+				title: {
+					text: 'Frequency of Screen Resolutions\n For Device Types',
+					fontSize: 12,
+					backgroundColor: "#37b8e3",
+				},
+				legend: {
+					draggable: true
+				},
+				scaleX: {
+					// set scale label
+					label: {
+					text: 'Resolution Categories'
+					},
+					// convert text on scale indices
+					labels: ['Portrait', 'Landscape']
+				},
+				scaleY: {
+					// scale label with unicode character
+					label: {
+					text: "Frequency"
+					}
+				},
+				plot: {
+					// animation docs here:
+					// https://www.zingchart.com/docs/tutorials/design-and-styling/chart-animation/#animation__effect
+					animation: {
+					effect: 'ANIMATION_EXPAND_BOTTOM',
+					method: 'ANIMATION_STRONG_EASE_OUT',
+					sequence: 'ANIMATION_BY_NODE',
+					speed: 275,
+					}
+				},
+				series: [{
+					values: orientation_t,
+					text: "touchscreen"
+					},
+					{
+					values: orientation_nt,
+					text: "not touchscreen"	
+					}
+				]
+				};
+
+				// render chart with width and height to
+				// fill the parent container CSS dimensions
+				zingchart.render({
+				id: 'myBar',
+				data: myBar,
+				});
+		  })
+		  
+		</script>
+	</body>
+</html>

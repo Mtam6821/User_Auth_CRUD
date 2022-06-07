@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<!-- CSS only -->
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+        <script src="https://cdn.zinggrid.com/zinggrid.min.js"></script>
+		
+        <title>Users</title>
+	</head>
+
+	<body>
+		<div class="container">
+			<header class="d-flex justify-content-center py-3">
+				<ul class="nav nav-pills">
+				<li class="nav-item"><a href="/index" class="nav-link">Home</a></li>
+				<li class="nav-item"><a href="/report" class="nav-link">Report</a></li>
+				<li class="nav-item"><a href="/userstable" class="nav-link active" aria-current="page">Admin</a></li>
+				<li class="nav-item"><a href="/logout" class="nav-link">Log Out</a></li>
+				</ul>
+			</header>
+		</div>
+
+		<div class="b-example-divider"></div>
+
+        <h2>Users: </h2>
+        <zing-grid context-menu editor-controls>
+            <zg-data src="http://localhost:3000/users"></zg-data>
+        </zing-grid>
+
+		<div class="b-example-divider"></div>
+
+		<div class="row row-cols-1 row-cols-md-4 mb-4 text-left">
+			
+			<div class="col">
+				<div class="card mb-4 rounded-3 shadow-sm">
+				<div class="card-header py-3">
+					<h4 class="my-0 fw-normal">Create</h4>
+				</div>
+				<div class="card-body">
+					<form data-bitwarden-watching="1" action="/users" method="POST" id="createForm">
+						<div class="form-floating">
+							<input id="createUsername" class="form-control" type="text" name="username" autocomplete="username" required>
+							<label for="createUsername">Username / Email</label>
+						</div>
+						<div class="form-floating">
+							<input id="createPassword" class="form-control" name="password" type="password" autocomplete="current-password" required>
+							<label for="createPassword">Password</label>
+						</div>
+						<div class="form-check">
+							<input id="createIsAdmin" class="form-check-input" name="is_admin" type="checkbox" value="1">
+							<label for="createIsAdmin">Click to make admin</label>
+						</div>
+						<button class="w-100 btn btn-lg btn-primary" type="submit">Submit</button>
+					</form>
+				</div>
+				</div>
+			</div>
+			<div class="col">
+				<div class="card mb-4 rounded-3 shadow-sm">
+				<div class="card-header py-3">
+					<h4 class="my-0 fw-normal">Read</h4>
+				</div>
+				<div class="card-body">
+					<form data-bitwarden-watching="1" id="readForm">
+						<div class="form-floating">
+							<input id="readId" type="number" class="form-control" name="id"  required>
+							<label for="readId">ID of user to read</label>
+						</div>			
+						<button class="w-100 btn btn-lg btn-primary" type="button" id="readBtn">Submit</button>
+					</form>
+
+					<h4 class="my-0 fw-normal">Result:</h4>
+					<p id="readRes"></p>
+				</div>
+				</div>
+			</div>
+			<div class="col">
+				<div class="card mb-4 rounded-3 shadow-sm">
+					<div class="card-header py-3">
+					<h4 class="my-0 fw-normal">Update</h4>
+					</div>
+					<div class="card-body">
+						<form data-bitwarden-watching="1" id="updateForm">
+							<div class="form-floating">
+								<input id="updateId" type="number" class="form-control" name="id"  required>
+								<label for="updateId">ID of user to update</label>
+							</div>
+							<div class="form-floating">
+								<input id="updateUsername" type="text" class="form-control" name="username"  required>
+								<label for="updateUsername">Username / Email</label>
+							</div>
+							<div class="form-floating">
+								<input id="updatePassword" type="password" class="form-control" name="password" required>
+								<label for="updatePassword">Password</label>
+							</div>
+							<div class="form-check">
+								<input id="updateIsAdmin" type="checkbox" class="form-check-input" name="is_admin" value="1">
+								<label for="updateIsAdmin">Click to make admin</label>
+							</div>
+							
+							<button class="w-100 btn btn-lg btn-primary" type="button" id="updateBtn">Submit</button>
+						</form>
+					</div>
+				</div>
+			</div>
+			<div class="col">
+			<div class="card mb-4 rounded-3 shadow-sm">
+				<div class="card-header py-3">
+				<h4 class="my-0 fw-normal">Delete</h4>
+				</div>
+				<div class="card-body">
+					<form data-bitwarden-watching="1" id="deleteForm">
+						<div class="form-floating">
+							<input id="delId" type="number" class="form-control" name="id"  required>
+							<label for="delId">ID of user to delete</label>
+						</div>			
+						<button class="w-100 btn btn-lg btn-primary" type="button" id="deleteBtn">Submit</button>
+					</form>
+				</div>
+			</div>
+			</div>
+		</div>
+
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+		<script>
+			document.getElementById('updateBtn').onclick = function () {
+				var updateId = document.querySelector("#updateId").value;
+				var updateUsername = document.querySelector("#updateUsername").value;
+				var updatePassword = document.querySelector("#updatePassword").value;
+				var updateIsAdmin = document.getElementById('updateIsAdmin').checked;
+				
+				mydata = {
+					'username' : updateUsername,
+					'password' : updatePassword,
+					'is_admin' : updateIsAdmin
+				}
+
+				console.log(JSON.stringify(mydata))
+				fetch('http://localhost:3000/users/' + updateId, {
+				method: 'PUT',
+				credentials: 'same-origin',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(mydata),
+				})
+				.then(response => response.json())
+				.then(data => {
+				console.log('Success:', data);
+				window.location.reload();
+				})
+				.catch((error) => {
+				console.error('Error:', error);
+				});
+			}
+
+			document.getElementById('readBtn').onclick = function () {
+				var readId = document.querySelector("#readId").value;
+				fetch('http://localhost:3000/users/' + readId, {
+				method: 'GET',
+				credentials: 'same-origin',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				})
+				.then(response => response.json())
+				.then(data => {
+				console.log('Success:', data);
+				document.getElementById("readRes").innerHTML = JSON.stringify(data);
+				})
+				.catch((error) => {
+				console.error('Error:', error);
+				document.getElementById("readRes").innerHTML = 'Error'
+				});
+			}
+
+			document.getElementById('deleteBtn').onclick = function () {
+				var delId = document.querySelector("#delId").value;
+				fetch('http://localhost:3000/users/' + delId, {
+				method: 'DELETE',
+				credentials: 'same-origin',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				})
+				.then(response => response.json())
+				.then(data => {
+				console.log('Success:', data);
+				window.location.reload();
+				})
+				.catch((error) => {
+				console.error('Error:', error);
+				});
+			}
+		</script>
+	</body>
+</html>
+
+  
+  
